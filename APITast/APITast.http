@@ -1,0 +1,6 @@
+@APITast_HostAddress = http://localhost:5282
+
+GET {{APITast_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

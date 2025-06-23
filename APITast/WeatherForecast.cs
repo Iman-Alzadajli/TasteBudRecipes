@@ -1,4 +1,4 @@
-namespace API
+namespace APITast
 {
     public class WeatherForecast
     {

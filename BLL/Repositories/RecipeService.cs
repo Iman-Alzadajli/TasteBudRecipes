@@ -14,10 +14,12 @@ namespace BLL.Repositories
         private readonly IGenericRepository<Rating> _ratingRepo;
 
 
-        public RecipeService(IGenericRepository<Recipe> recipeRepo)
+        public RecipeService(IGenericRepository<Recipe> recipeRepo, IGenericRepository<Rating> ratingRepo)
         {
             _recipeRepo = recipeRepo;
+            _ratingRepo = ratingRepo;
         }
+
 
         public async Task<IEnumerable<Recipe>> GetAllRecipesAsync()
         {
@@ -32,11 +34,15 @@ namespace BLL.Repositories
         public async Task AddRecipeAsync(Recipe recipe)
         {
             await _recipeRepo.Add(recipe);
+            await _recipeRepo.SaveAsync(); 
+
         }
 
         public async Task UpdateRecipeAsync(Recipe recipe)
         {
             _recipeRepo.Update(recipe);
+            await _recipeRepo.SaveAsync();
+
         }
 
         public async Task DeleteRecipeAsync(int id)
@@ -44,6 +50,8 @@ namespace BLL.Repositories
             var recipe = await _recipeRepo.GetById(id);
             if (recipe != null)
                 _recipeRepo.Delete(recipe);
+            await _recipeRepo.SaveAsync();
+
         }
 
         public async Task<IEnumerable<Recipe>> SearchRecipesAsync(string term)
@@ -69,6 +77,8 @@ namespace BLL.Repositories
             {
                 existing.Score = score;
                 _ratingRepo.Update(existing);
+                await _ratingRepo.SaveAsync();
+
             }
             else
             {
@@ -78,6 +88,8 @@ namespace BLL.Repositories
                     UserId = userId,
                     Score = score
                 });
+                await _ratingRepo.SaveAsync();
+
             }
 
             return true;

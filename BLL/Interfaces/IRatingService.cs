@@ -13,7 +13,9 @@ namespace BLL.Interfaces
         Task<Rating> GetRatingByIdAsync(int id);
         Task AddRatingAsync(Rating rating);
         Task DeleteRatingAsync(int id);
-        Task<bool> RateRecipeAsync(int recipeId, string userId, int value);
+        Task<bool> RateRecipeAsync(int recipeId, string userId, int score);
+        Task<IEnumerable<Rating>> GetRatingsByRecipeIdAsync(int recipeId); // bringrating  for specific recipe 
+
 
     }
 }

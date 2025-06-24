@@ -15,9 +15,15 @@ namespace BLL.Repositories
         private readonly IGenericRepository<Recipe> _recipeRepo;
 
 
-        public RatingService(IGenericRepository<Rating> ratingRepo)
+
+
+
+        public RatingService(IGenericRepository<Rating> ratingRepo , IGenericRepository<Recipe> recipeRepo)
         {
             _ratingRepo = ratingRepo;
+            _recipeRepo = recipeRepo;
+
+           
         }
 
         public async Task<IEnumerable<Rating>> GetAllRatingsAsync()
@@ -33,6 +39,8 @@ namespace BLL.Repositories
         public async Task AddRatingAsync(Rating rating)
         {
             await _ratingRepo.Add(rating);
+            await _ratingRepo.SaveAsync();  // Save changes
+
         }
 
         public async Task DeleteRatingAsync(int id)
@@ -40,6 +48,9 @@ namespace BLL.Repositories
             var rating = await _ratingRepo.GetById(id);
             if (rating != null)
                 _ratingRepo.Delete(rating);
+            await _ratingRepo.SaveAsync();  // Save changes
+
+
         }
 
 
@@ -50,9 +61,8 @@ namespace BLL.Repositories
             if (recipe == null)
                 return false;
 
-            var allRatings = await _ratingRepo.GetAll();
-            var existing = allRatings.FirstOrDefault(r =>
-                r.RecipeId == recipeId && r.UserId == userId);
+            var existingRatings = await _ratingRepo.Find(r => r.RecipeId == recipeId && r.UserId == userId);
+            var existing = existingRatings.FirstOrDefault();
 
             if (existing != null)
             {
@@ -65,12 +75,25 @@ namespace BLL.Repositories
                 {
                     RecipeId = recipeId,
                     UserId = userId,
-                    Score = score
+                    Score = score,
+                    Comment = "" // أو "No comment"
                 });
             }
 
+            await _ratingRepo.SaveAsync();
             return true;
         }
+
+
+
+        public async Task<IEnumerable<Rating>> GetRatingsByRecipeIdAsync(int recipeId)
+        {
+            return await _ratingRepo.Find(r => r.RecipeId == recipeId);
+        }
+
+      
+
+
 
     }
 }

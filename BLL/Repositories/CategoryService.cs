@@ -15,6 +15,7 @@ namespace BLL.Repositories
         public CategoryService(IGenericRepository<Category> categoryRepo)
         {
             _categoryRepo = categoryRepo;
+        
         }
 
         public async Task<IEnumerable<Category>> GetAllCategoriesAsync()
@@ -30,11 +31,13 @@ namespace BLL.Repositories
         public async Task AddCategoryAsync(Category category)
         {
             await _categoryRepo.Add(category);
+            await _categoryRepo.SaveAsync();
         }
 
         public async Task UpdateCategoryAsync(Category category)
         {
             _categoryRepo.Update(category);
+            await _categoryRepo.SaveAsync();
         }
 
         public async Task DeleteCategoryAsync(int id)
@@ -42,6 +45,7 @@ namespace BLL.Repositories
             var category = await _categoryRepo.GetById(id);
             if (category != null)
                 _categoryRepo.Delete(category);
+            await _categoryRepo.SaveAsync();
         }
     }
 }

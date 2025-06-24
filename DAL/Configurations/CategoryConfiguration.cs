@@ -18,6 +18,12 @@ namespace DAL.Configurations
             builder.Property(c => c.Name)
                    .IsRequired()
                    .HasMaxLength(50);
+
+            builder.HasMany(c => c.Recipes)
+
+                   .WithOne(r => r.Category)
+                   .HasForeignKey(r => r.CategoryId)
+                   .OnDelete(DeleteBehavior.Cascade);
         }
     }
 

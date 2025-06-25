@@ -88,6 +88,25 @@ namespace APITast.Controllers
 
             return Ok("Logged out successfully");
         }
+
+
+        //for  the role 
+
+        [HttpGet("GetRoleByEmail")]
+        public async Task<IActionResult> GetRoleByEmail(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+                return NotFound("User not found");
+
+            var roles = await _userManager.GetRolesAsync(user);
+            if (!roles.Any())
+                return NotFound("Role not assigned");
+
+            return Ok(roles.First()); //  "Admin" or "User"
+        }
+
+
     }
 }
 

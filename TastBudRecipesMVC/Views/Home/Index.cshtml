@@ -1,29 +1,114 @@
-﻿@model List<Models.Entities.Category>
-
+﻿@model Models.ViewModels.HomePageVM
 
 @{
     ViewData["Title"] = "Home";
+    var term = ViewBag.SearchTerm as string ?? "";
+
+
+    <div class="text-center mt-3">
+    <img src="~/imgs/cover.png" alt="Welcome Image" class="img-fluid rounded" style="max-height: 350px; max-width : 800px;" />
+</div>
 }
 
 <div class="container mt-5">
+
+
+ 
     <div class="text-center bg-light p-5 rounded shadow-sm">
         <h1 class="display-4 text-success mb-3">🍽️ Welcome to TasteBud!</h1>
         <p class="lead">Discover, share, and enjoy homemade recipes from all over the world.</p>
+
         <hr class="my-4" />
-        <p class="text-muted">Get started by <a href="/Account/Register" class="text-decoration-none">creating an account</a> or <a href="/Account/Login" class="text-decoration-none">logging in</a>.</p>
+
+
+        @if (!User.Identity.IsAuthenticated)
+{
+    <p class="text-muted">
+        Get started by <a href="/Account/Register">creating an account</a> or <a href="/Account/Login">logging in</a>.
+    </p>
+}
+
+
+
         <a class="btn btn-success btn-lg mt-3" href="/Recipes" role="button">🍳 Browse Recipes</a>
+
+     @*   add dasbored depends on user type 
+        <div class="mt-4">
+            @if (User.Identity.IsAuthenticated)
+            {
+                if (User.IsInRole("Admin"))
+                {
+                    <a class="btn btn-danger me-2" href="/Admin/Dashboard">👑 Admin Dashboard</a>
+                }
+                else if (User.IsInRole("User"))
+                {
+                    <a class="btn btn-primary" href="/User/Dashboard">👤 User Dashboard</a>
+                }
+            }
+        </div>
+
+        *@ 
+         
+  
+
+
+        <form method="get" asp-controller="Home" asp-action="Index" class="d-flex justify-content-center mt-4">
+            <input name="term" class="form-control w-50 me-2" placeholder="🔍 Search by name or ingredients..." value="@term" />
+            <button type="submit" class="btn btn-outline-success">Search</button>
+        </form>
+
+
+
     </div>
+
 
     <div class="text-center mt-5">
         <h4 class="text-secondary">Browse by Category</h4>
         <div class="d-flex flex-wrap justify-content-center gap-3 mt-3">
-            @foreach (var cat in Model)
+            @foreach (var cat in Model.Categories)
             {
-                <a class="btn btn-outline-success" href="/Recipes/ByCategory/@cat.Id">
-                    @cat.Name
-                </a>
+                <a class="btn btn-outline-success" href="/Home/Index?categoryId=@cat.Id">@cat.Name</a>
+
             }
         </div>
     </div>
 
+
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mt-4">
+        @if (Model.Recipes != null && Model.Recipes.Any())
+        {
+            foreach (var recipe in Model.Recipes)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <div style="font-size: 40px;">🍽️</div>
+                            <h5 class="card-title mt-2">@recipe.Title</h5>
+                            <p class="card-text text-muted">
+                                @if (!string.IsNullOrEmpty(recipe.Description))
+                                {
+                                    @(recipe.Description.Length > 80
+                                    ? recipe.Description.Substring(0, 80) + "..."
+                                    : recipe.Description)
+                                }
+                                else
+                                {
+                                    <i>No description</i>
+                                }
+                            </p>
+                            <a href="/Recipes/Details/@recipe.Id" class="btn btn-sm btn-success mt-2">View Recipe</a>
+                        </div>
+                    </div>
+                </div>
+
+            }
+        }
+        else
+        {
+            <div class="text-center text-muted mt-4">
+                <p>No recipes found.</p>
+            </div>
+        }
+    </div>
 </div>

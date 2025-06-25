@@ -1,4 +1,4 @@
-html {
+﻿html {
   font-size: 14px;
 }
 
@@ -20,3 +20,100 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+/*font */
+html {
+    font-size: 14px;
+    color: #00001a; 
+    background-color: #f2d9f2; 
+    position: relative;
+    min-height: 100%;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+body {
+    margin-bottom: 60px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f2d9f2;
+}
+
+
+.btn-success,
+.text-success,
+.bg-success,
+.btn-outline-success {
+    background-color: #993399 !important; 
+    border-color: #993399 !important;
+    color: #f2d9f2 !important; 
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.btn-outline-success {
+    background-color: transparent !important;
+    color: #993399 !important;
+    border-color: #993399 !important;
+}
+
+    .btn-outline-success:hover {
+        background-color: #7a267a !important; 
+        color: #f2d9f2 !important;
+    }
+
+.text-success {
+    color: #993399 !important;
+}
+
+/* Inputs btn  */
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem #f2d9f2, 0 0 0 0.25rem #993399;
+    outline: none;
+    border-color: #993399;
+}
+
+/* cards */
+.card {
+    background-color: #ffffffcc; 
+    border-radius: 10px;
+    border: 1px solid #d1b3d1; 
+    box-shadow: 0 4px 6px rgba(153, 51, 153, 0.1);
+}
+
+/*h */
+h1, h2, h3, h4, h5, h6 {
+    color: #993399;
+    font-weight: 700;
+}
+
+
+
+/* bk*/
+.container {
+    background-color: #f2d9f2;
+}
+
+
+
+/* any green color change it to  */
+.text-success,
+.btn-success,
+.bg-success,
+.btn-outline-success {
+    color: #f2d9f2 !important;
+    background-color: #602060 !important;
+    border-color: #993399 !important;
+}
+
+
+/* cards  */
+.card:hover {
+    box-shadow: 0 8px 15px rgba(153, 51, 153, 0.2);
+    transform: translateY(-3px);
+    transition: all 0.3s ease;
+}
+
+

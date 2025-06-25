@@ -1,0 +1,26 @@
+﻿@{
+    ViewData["Title"] = "User Dashboard";
+    Layout = "_Layout";
+}
+
+<div class="container mt-5">
+    <h2>👤 Welcome, @User.Identity.Name!</h2>
+    <p>This is your user dashboard.</p>
+
+
+    <div class="mt-4 d-flex gap-3">
+        <!-- Button to view user own recipes -->
+        <a class="btn btn-outline-primary" href="/User/MyRecipes">
+            📖 My Recipes
+        </a>
+
+        <!-- Button to add a new recipe -->
+        <a class="btn btn-outline-success" href="/User/AddRecipe">
+            ➕ Add New Recipe
+        </a>
+    </div>
+
+
+</div>
+
+

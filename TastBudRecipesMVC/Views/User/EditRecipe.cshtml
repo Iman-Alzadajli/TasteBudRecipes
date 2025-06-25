@@ -1,0 +1,66 @@
+﻿@model Models.ViewModels.RecipeInputVM
+
+@{
+    ViewData["Title"] = "Edit Recipe";
+    Layout = "_Layout";
+}
+<h2>✏️ Edit Recipe</h2>
+
+<form asp-action="EditRecipe" method="post">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Ingredients" class="form-label"></label>
+        <textarea asp-for="Ingredients" class="form-control"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Instructions" class="form-label"></label>
+        <textarea asp-for="Instructions" class="form-control"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="PrepTimeMinutes" class="form-label"></label>
+        <input asp-for="PrepTimeMinutes" class="form-control" type="number" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="CookTimeMinutes" class="form-label"></label>
+        <input asp-for="CookTimeMinutes" class="form-control" type="number" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Servings" class="form-label"></label>
+        <input asp-for="Servings" class="form-control" type="number" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Difficulty" class="form-label"></label>
+        <select asp-for="Difficulty" class="form-control" asp-items="Html.GetEnumSelectList<Models.Entities.Enums.DifficultyLevel>()">
+            <option value="">-- Select Difficulty --</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="CategoryId" class="form-label"></label>
+        <input asp-for="CategoryId" class="form-control" type="number" />
+        <span asp-validation-for="CategoryId" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Update</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

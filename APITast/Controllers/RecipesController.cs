@@ -157,5 +157,18 @@ namespace API.Controllers
 
             return Ok("Recipe rated successfully");
         }
+
+
+
+        // GET: api/recipes/bycategory/5
+        [HttpGet("bycategory/{categoryId}")]
+        public async Task<IActionResult> GetByCategory(int categoryId)
+        {
+            var recipes = await _recipeService.GetRecipesByCategoryAsync(categoryId);
+            if (recipes == null || !recipes.Any())
+                return NotFound("No recipes found for this category.");
+
+            return Ok(recipes);
+        }
     }
 }

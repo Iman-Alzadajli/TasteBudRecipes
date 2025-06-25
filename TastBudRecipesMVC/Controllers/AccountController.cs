@@ -1,15 +1,18 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc;
 using Models.ViewModels;
+using System.Security.Claims;
 
 namespace TastBudRecipesMVC.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly HttpClient _httpClient;
+        private readonly HttpClient _httpClient; 
 
         public AccountController(IHttpClientFactory clientFactory)
         {
-            _httpClient = clientFactory.CreateClient();
+            _httpClient = clientFactory.CreateClient(); //send request mvc to api 
         }
 
 
@@ -27,7 +30,7 @@ namespace TastBudRecipesMVC.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var httpClient = new HttpClient();
+            var httpClient = new HttpClient(); //create object and this will be the api 
             httpClient.BaseAddress = new Uri("https://localhost:7218/");
 
             var response = await httpClient.PostAsJsonAsync("api/Auth/register", model);
@@ -38,7 +41,7 @@ namespace TastBudRecipesMVC.Controllers
             }
 
            
-            var errorResponse = await response.Content.ReadAsStringAsync();
+            var errorResponse = await response.Content.ReadAsStringAsync();//give message 
 
             try
             {
@@ -59,12 +62,14 @@ namespace TastBudRecipesMVC.Controllers
 
 
 
+        //login 
+
+
         [HttpGet]
         public IActionResult Login()
         {
             return View();
         }
-
 
 
 
@@ -79,24 +84,53 @@ namespace TastBudRecipesMVC.Controllers
 
             var response = await httpClient.PostAsJsonAsync("api/Auth/login", model);
 
-            if (response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
             {
-             
-                var token = await response.Content.ReadAsStringAsync();
-
-               
-                Response.Cookies.Append("jwt", token, new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.Strict
-                });
-
-                return RedirectToAction("Index", "Home");
+                ModelState.AddModelError(string.Empty, "Login failed.");
+                return View(model);
             }
 
-            ModelState.AddModelError(string.Empty, "Login failed.");
-            return View(model);
+            // get role tho the api 
+            var roleResponse = await httpClient.GetAsync($"api/Auth/GetRoleByEmail?email={model.Email}");
+            if (!roleResponse.IsSuccessStatusCode)
+            {
+                ModelState.AddModelError(string.Empty, "Failed to retrieve user role.");
+                return View(model);
+            }
+
+            var role = await roleResponse.Content.ReadAsStringAsync();
+            role = role.Trim('"'); 
+
+            // create  Claims
+            var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.Name, model.Email),
+        new Claim(ClaimTypes.Role, role) , // this to show dashbored 
+    };
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal,
+                new AuthenticationProperties { IsPersistent = model.RememberMe });
+
+            return RedirectToAction("Index", "Home");
         }
+
+
+        // end of login 
+
+
+        //logout 
+
+        [HttpPost]
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Index", "Home");
+        }
+
+
+
     }
 }

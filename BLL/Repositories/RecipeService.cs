@@ -63,6 +63,14 @@ namespace BLL.Repositories
         }
 
 
+        //search receip with category 
+        public async Task<IEnumerable<Recipe>> GetRecipesByCategoryAsync(int categoryId)
+        {
+            var allRecipes = await _recipeRepo.GetAll();
+            return allRecipes.Where(r => r.CategoryId == categoryId);
+        }
+
+
         public async Task<bool> RateRecipeAsync(int recipeId, string userId, int score)
         {
             var recipe = await _recipeRepo.GetById(recipeId);
@@ -94,5 +102,8 @@ namespace BLL.Repositories
 
             return true;
         }
+
+
+        
     }
 }

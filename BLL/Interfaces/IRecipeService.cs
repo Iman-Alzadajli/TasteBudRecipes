@@ -16,6 +16,8 @@ namespace BLL.Interfaces
         Task DeleteRecipeAsync(int id);
         Task<IEnumerable<Recipe>> SearchRecipesAsync(string term);
         Task<bool> RateRecipeAsync(int recipeId, string userId, int value);
+        Task<IEnumerable<Recipe>> GetRecipesByCategoryAsync(int categoryId); //search with category 
+
 
 
 

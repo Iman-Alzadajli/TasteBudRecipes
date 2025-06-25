@@ -1,0 +1,28 @@
+﻿@model Models.ViewModels.RecipeInputVM
+
+@{
+    ViewData["Title"] = "Recipe Details";
+}
+
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h2 class="text-success">@Model.Title</h2>
+
+            <p class="text-muted">@Model.Description</p>
+
+            <hr />
+            <p><strong>Category:</strong> @Model.CategoryName</p>
+            <p><strong>Ingredients:</strong><br /> @Model.Ingredients</p>
+            <p><strong>Instructions:</strong><br /> @Model.Instructions</p>
+            <p><strong>Prep Time:</strong> @Model.PrepTimeMinutes mins</p>
+            <p><strong>Cook Time:</strong> @Model.CookTimeMinutes mins</p>
+            <p><strong>Servings:</strong> @Model.Servings</p>
+            <p><strong>Difficulty:</strong> @Model.Difficulty</p>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="/" class="btn btn-outline-secondary">← Back to Home</a>
+    </div>
+</div>

@@ -39,6 +39,14 @@ namespace APITast
             .AddDefaultTokenProviders();
 
 
+            //This line prevents a cycle during conversion to JSON
+
+            builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
+
 
 
 
@@ -55,7 +63,7 @@ namespace APITast
 
 
             //added by me
-            builder.Services.AddAuthorization();
+            builder.Services.AddAuthorization();// give preivillage it has  [Authorize]
 
 
 

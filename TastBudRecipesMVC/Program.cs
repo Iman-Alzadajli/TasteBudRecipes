@@ -40,6 +40,9 @@ namespace TastBudRecipesMVC
 
 
 
+           
+
+
 
             builder.Services.AddControllersWithViews()
     .AddNewtonsoftJson();//added by me json request of body 

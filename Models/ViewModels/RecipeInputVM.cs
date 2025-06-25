@@ -29,8 +29,8 @@ namespace Models.ViewModels
 
         public DifficultyLevel? Difficulty { get; set; }
 
-        [Required(ErrorMessage = "CategoryId is required.")]
+       // [Required(ErrorMessage = "CategoryId is required.")]
         public int CategoryId { get; set; }
-        public string CategoryName { get; set; }
+        public string CategoryName { get; set; } = "unknown";
     }
 }

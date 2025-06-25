@@ -6,6 +6,8 @@
 
 <h2>➕ Add Recipe</h2>
 
+<div asp-validation-summary="All" class="text-danger"></div>
+
 @if (ViewBag.Success != null && (bool)ViewBag.Success)
 {
     <div class="alert alert-success alert-dismissible fade show" role="alert">

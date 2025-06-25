@@ -53,8 +53,11 @@
     </div>
 
     <div class="mb-3">
-        <label asp-for="CategoryId" class="form-label"></label>
-        <input asp-for="CategoryId" class="form-control" type="number" />
+        <label asp-for="CategoryId" class="form-label">Category</label> @* Added label text for Category *@
+        <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.Categories">
+            @* Changed to dropdown *@
+            <option value="">-- Select Category --</option>
+        </select>
         <span asp-validation-for="CategoryId" class="text-danger"></span>
     </div>
 

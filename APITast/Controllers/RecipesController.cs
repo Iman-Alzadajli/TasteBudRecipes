@@ -170,5 +170,31 @@ namespace API.Controllers
 
             return Ok(recipes);
         }
+
+        // get rec using userid
+
+        // GET: api/recipes/myrecipes
+        [Authorize]
+        [HttpGet("myrecipes")]
+        public async Task<IActionResult> GetMyRecipes()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User ID not found.");
+            }
+
+            var recipes = await _recipeService.GetRecipesByUserIdAsync(userId);
+            if (recipes == null || !recipes.Any())
+            {
+                return NotFound("No recipes found for this user.");
+            }
+
+            return Ok(recipes);
+        }
+
+
+
+
     }
 }

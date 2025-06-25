@@ -104,6 +104,13 @@ namespace BLL.Repositories
         }
 
 
-        
+        public async Task<IEnumerable<Recipe>> GetRecipesByUserIdAsync(string userId)
+        {
+            return await _recipeRepo.Find(r => r.UserId == userId);
+        }
+
+
+
+
     }
 }

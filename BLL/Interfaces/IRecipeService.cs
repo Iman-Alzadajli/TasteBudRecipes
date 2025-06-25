@@ -18,6 +18,9 @@ namespace BLL.Interfaces
         Task<bool> RateRecipeAsync(int recipeId, string userId, int value);
         Task<IEnumerable<Recipe>> GetRecipesByCategoryAsync(int categoryId); //search with category 
 
+        Task<IEnumerable<Recipe>> GetRecipesByUserIdAsync(string userId); //get recipe using id 
+
+
 
 
 

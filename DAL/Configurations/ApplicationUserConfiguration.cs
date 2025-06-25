@@ -15,6 +15,7 @@ namespace DAL.Configurations
         {
             builder.Property(u => u.FullName)
                    .HasMaxLength(100);
+
         }
     }
 }

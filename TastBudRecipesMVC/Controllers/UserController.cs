@@ -45,7 +45,7 @@ public class UserController : Controller
     {
         var client = CreateHttpClient();
 
-        // طباعة معلومات للتشخيص
+     
         Console.WriteLine($"User is authenticated: {User.Identity.IsAuthenticated}");
         Console.WriteLine($"User name: {User.Identity.Name}");
         Console.WriteLine($"All Claims:");
@@ -55,11 +55,11 @@ public class UserController : Controller
             Console.WriteLine($"  {claim.Type}: {claim.Value}");
         }
 
-        // الحصول على معرف المستخدم
+     
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         Console.WriteLine($"UserId from NameIdentifier: {userId}");
 
-        // جرب طرق أخرى للحصول على معرف المستخدم
+    
         var userIdAlt1 = User.FindFirstValue("sub");
         var userIdAlt2 = User.FindFirstValue("id");
         var userIdAlt3 = User.FindFirstValue("user_id");
@@ -71,7 +71,7 @@ public class UserController : Controller
         Console.WriteLine($"  user_id: {userIdAlt3}");
         Console.WriteLine($"  userName: {userName}");
 
-        // استخدم أي معرف متاح
+        
         var finalUserId = userId ?? userIdAlt1 ?? userIdAlt2 ?? userIdAlt3 ?? userName;
 
         if (string.IsNullOrEmpty(finalUserId))
@@ -82,7 +82,7 @@ public class UserController : Controller
 
         Console.WriteLine($"Using userId: {finalUserId}");
 
-        // استخدام endpoint جديد يمرر معرف المستخدم
+        
         var response = await client.GetAsync($"https://localhost:7218/api/recipes/user/{finalUserId}");
 
         Console.WriteLine($"API Response Status: {response.StatusCode}");
@@ -160,7 +160,7 @@ public class UserController : Controller
     {
         var client = CreateHttpClient();
 
-        // إعادة تحميل التصنيفات في حال فشل التحقق من صحة النموذج
+        // 
         var categoriesResponse = await client.GetAsync("https://localhost:7218/api/category");
         var categories = new List<Category>();
         if (categoriesResponse.IsSuccessStatusCode)

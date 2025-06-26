@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Models.Entities;
+using Models.Entities.UserMangment;
 using System.Net.Http;
 
 namespace TastBudRecipesMVC.Controllers
@@ -79,5 +80,56 @@ namespace TastBudRecipesMVC.Controllers
 
             return RedirectToAction("AllRecipes");
         }
+
+
+
+
+        // get all users 
+
+        public async Task<IActionResult> AllUsers()
+        {
+            var response = await _httpClient.GetAsync("https://localhost:7218/api/admin/users");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var users = await response.Content.ReadFromJsonAsync<List<ApplicationUser>>();
+                return View(users ?? new List<ApplicationUser>());
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                ModelState.AddModelError("", $"❌ Failed to load users: {error}");
+                return View(new List<ApplicationUser>());
+            }
+        }
+
+
+
+        //delete users 
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteUser(string id)
+        {
+            var response = await _httpClient.DeleteAsync($"https://localhost:7218/api/admin/DeleteUser/{id}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                TempData["SuccessMessage"] = "User deleted successfully!";
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                TempData["ErrorMessage"] = $"❌ Failed to delete user: {error}";
+            }
+
+            return RedirectToAction("AllUsers");
+        }
+
+
+
+
+
+
+
     }
 }

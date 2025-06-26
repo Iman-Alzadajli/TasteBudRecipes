@@ -6,4 +6,18 @@
 <div class="container mt-5">
     <h2>👑 Welcome,@User.Identity.Name!</h2>
     <p>This is your admin dashboard.</p>
+
+    <div class="mt-4 d-flex gap-3">
+        <!-- Button to view user own recipes -->
+        <a class="btn btn-outline-primary" href="/Admin/AllRecipes">
+            📖 All Recipes
+        </a>
+
+        <!-- Button to add a new recipe -->
+        <a class="btn btn-outline-success" href="/Admin/AllUsers">
+            📖 All Users
+        </a>
+    </div>
+
+
 </div>

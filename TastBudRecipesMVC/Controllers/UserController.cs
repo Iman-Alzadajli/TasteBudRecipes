@@ -1,18 +1,35 @@
 ﻿using Azure.Core;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Models.Entities;
 using Models.ViewModels;
+using System.Net.Http;
+using System.Security.Claims;
 
 [Authorize(Roles = "User")]
 public class UserController : Controller
 {
-    private readonly HttpClient _httpClient;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public UserController(IHttpClientFactory httpClientFactory)
+    public UserController(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor)
     {
-        _httpClient = httpClientFactory.CreateClient();
+        _httpClientFactory = httpClientFactory;
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    private HttpClient CreateHttpClient()
+    {
+        var client = _httpClientFactory.CreateClient();
+        var context = _httpContextAccessor.HttpContext;
+        if (context != null && context.Request.Headers.TryGetValue("Cookie", out var cookieHeader))
+        {
+            client.DefaultRequestHeaders.Remove("Cookie");
+            client.DefaultRequestHeaders.Add("Cookie", cookieHeader.ToString());
+        }
+        return client;
     }
 
     public IActionResult Dashboard()
@@ -20,45 +37,103 @@ public class UserController : Controller
         return View();
     }
 
-    // GET: /User/MyRecipes
-    // This will show only recipes created by the own user
+
+
+
+    // GET: /User/MyRecipes - مع debugging
     public async Task<IActionResult> MyRecipes()
     {
-        // *** START OF MODIFICATION FOR MyRecipes GET ***
-        var request = new HttpRequestMessage(HttpMethod.Get, "https://localhost:7218/api/recipes/myrecipes");
-        if (Request.Headers.ContainsKey("Cookie"))
+        var client = CreateHttpClient();
+
+        // طباعة معلومات للتشخيص
+        Console.WriteLine($"User is authenticated: {User.Identity.IsAuthenticated}");
+        Console.WriteLine($"User name: {User.Identity.Name}");
+        Console.WriteLine($"All Claims:");
+
+        foreach (var claim in User.Claims)
         {
-            request.Headers.Add("Cookie", Request.Headers["Cookie"].ToString());
+            Console.WriteLine($"  {claim.Type}: {claim.Value}");
         }
 
-        var response = await _httpClient.SendAsync(request);
+        // الحصول على معرف المستخدم
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        Console.WriteLine($"UserId from NameIdentifier: {userId}");
+
+        // جرب طرق أخرى للحصول على معرف المستخدم
+        var userIdAlt1 = User.FindFirstValue("sub");
+        var userIdAlt2 = User.FindFirstValue("id");
+        var userIdAlt3 = User.FindFirstValue("user_id");
+        var userName = User.Identity.Name;
+
+        Console.WriteLine($"Alternative userId methods:");
+        Console.WriteLine($"  sub: {userIdAlt1}");
+        Console.WriteLine($"  id: {userIdAlt2}");
+        Console.WriteLine($"  user_id: {userIdAlt3}");
+        Console.WriteLine($"  userName: {userName}");
+
+        // استخدم أي معرف متاح
+        var finalUserId = userId ?? userIdAlt1 ?? userIdAlt2 ?? userIdAlt3 ?? userName;
+
+        if (string.IsNullOrEmpty(finalUserId))
+        {
+            Console.WriteLine("No user identifier found - redirecting to login");
+            return RedirectToAction("Login", "Account");
+        }
+
+        Console.WriteLine($"Using userId: {finalUserId}");
+
+        // استخدام endpoint جديد يمرر معرف المستخدم
+        var response = await client.GetAsync($"https://localhost:7218/api/recipes/user/{finalUserId}");
+
+        Console.WriteLine($"API Response Status: {response.StatusCode}");
 
         if (response.IsSuccessStatusCode)
         {
             var myRecipes = await response.Content.ReadFromJsonAsync<List<Recipe>>();
-            return View(myRecipes);
+            Console.WriteLine($"Found {myRecipes?.Count ?? 0} recipes");
+
+            if (myRecipes != null)
+            {
+                foreach (var recipe in myRecipes)
+                {
+                    if (recipe.Category == null && recipe.CategoryId != 0)
+                    {
+                        var categoryResponse = await client.GetAsync($"https://localhost:7218/api/category/{recipe.CategoryId}");
+                        if (categoryResponse.IsSuccessStatusCode)
+                        {
+                            recipe.Category = await categoryResponse.Content.ReadFromJsonAsync<Category>();
+                        }
+                    }
+                }
+            }
+
+            return View(myRecipes ?? new List<Recipe>());
         }
-        else if (response.StatusCode == System.Net.HttpStatusCode.NotFound) // No recipes found for user
+        else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
             ViewBag.Message = "You haven't created any recipes yet.";
-            return View(new List<Recipe>()); // Return an empty list to the view
+            return View(new List<Recipe>());
         }
         else
         {
-            // Handle other API errors
             var error = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"API Error: {error}");
             ModelState.AddModelError("", $"Failed to load your recipes: {error}");
-            return View(new List<Recipe>()); // Return empty list on error
+            return View(new List<Recipe>());
         }
-        // *** END OF MODIFICATION FOR MyRecipes GET ***
     }
 
-    //  GET: /User/AddRecipe
-    // Show form with category dropdown
+    //
+
+
+
+    // GET: /User/AddRecipe
     [HttpGet]
     public async Task<IActionResult> AddRecipe()
     {
-        var categoriesResponse = await _httpClient.GetAsync("https://localhost:7218/api/category");
+        var client = CreateHttpClient();
+
+        var categoriesResponse = await client.GetAsync("https://localhost:7218/api/category");
         var categories = new List<Category>();
 
         if (categoriesResponse.IsSuccessStatusCode)
@@ -70,22 +145,28 @@ public class UserController : Controller
             .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
             .ToList();
 
-        return View(new RecipeInputVM()); // return with empty model
+        return View(new RecipeInputVM());
     }
 
-    //  POST: /User/AddRecipe
+
+
+
+
+
+
+    // POST: /User/AddRecipe
     [HttpPost]
     public async Task<IActionResult> AddRecipe(RecipeInputVM model)
     {
-        // 1. تحميل الكاتجوري للدروبداون في حال فشل الحفظ
-        var categoriesResponse = await _httpClient.GetAsync("https://localhost:7218/api/category");
-        var categories = new List<Category>();
+        var client = CreateHttpClient();
 
+        // إعادة تحميل التصنيفات في حال فشل التحقق من صحة النموذج
+        var categoriesResponse = await client.GetAsync("https://localhost:7218/api/category");
+        var categories = new List<Category>();
         if (categoriesResponse.IsSuccessStatusCode)
         {
             categories = await categoriesResponse.Content.ReadFromJsonAsync<List<Category>>();
         }
-
         ViewBag.Categories = categories
             .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
             .ToList();
@@ -93,15 +174,7 @@ public class UserController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:7218/api/recipes");
-        request.Content = JsonContent.Create(model);
-
-        if (Request.Headers.ContainsKey("Cookie"))
-        {
-            request.Headers.Add("Cookie", Request.Headers["Cookie"].ToString());
-        }
-
-        var response = await _httpClient.SendAsync(request);
+        var response = await client.PostAsJsonAsync("https://localhost:7218/api/recipes", model);
 
         if (response.IsSuccessStatusCode)
         {
@@ -109,26 +182,26 @@ public class UserController : Controller
             ModelState.Clear();
             return View(new RecipeInputVM());
         }
-
-
-        var error = await response.Content.ReadAsStringAsync();
-        ModelState.AddModelError("", $"❌ Failed to add recipe: {error}");
-        return View(model);
+        else
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            ModelState.AddModelError("", $"❌ Failed to add recipe: {error}");
+            return View(model);
+        }
     }
 
+
+
+
+
+
     // GET: /User/EditRecipe/{id}
-    // Load a recipe by its ID for editing
     [HttpGet]
     public async Task<IActionResult> EditRecipe(int id)
     {
-        // *** START OF MODIFICATION FOR EditRecipe GET ***
-        var request = new HttpRequestMessage(HttpMethod.Get, $"https://localhost:7218/api/recipes/{id}");
-        if (Request.Headers.ContainsKey("Cookie"))
-        {
-            request.Headers.Add("Cookie", Request.Headers["Cookie"].ToString());
-        }
+        var client = CreateHttpClient();
 
-        var response = await _httpClient.SendAsync(request);
+        var response = await client.GetAsync($"https://localhost:7218/api/recipes/{id}");
 
         if (!response.IsSuccessStatusCode)
         {
@@ -137,8 +210,7 @@ public class UserController : Controller
 
         var recipe = await response.Content.ReadFromJsonAsync<Recipe>();
 
-        // Fetch categories for the dropdown
-        var categoriesResponse = await _httpClient.GetAsync("https://localhost:7218/api/category");
+        var categoriesResponse = await client.GetAsync("https://localhost:7218/api/category");
         var categories = new List<Category>();
         if (categoriesResponse.IsSuccessStatusCode)
         {
@@ -148,15 +220,15 @@ public class UserController : Controller
             .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
             .ToList();
 
-
-        //Fetch category data based on CategoryId
-        var categoryResponse = await _httpClient.GetAsync($"https://localhost:7218/api/category/{recipe.CategoryId}");
         Category category = null;
-        if (categoryResponse.IsSuccessStatusCode)
+        if (recipe.CategoryId != 0)
         {
-            category = await categoryResponse.Content.ReadFromJsonAsync<Category>();
+            var categoryResponse = await client.GetAsync($"https://localhost:7218/api/category/{recipe.CategoryId}");
+            if (categoryResponse.IsSuccessStatusCode)
+            {
+                category = await categoryResponse.Content.ReadFromJsonAsync<Category>();
+            }
         }
-
 
         var model = new RecipeInputVM
         {
@@ -169,24 +241,27 @@ public class UserController : Controller
             CookTimeMinutes = recipe.CookTimeMinutes,
             Servings = recipe.Servings,
             Difficulty = recipe.Difficulty,
-            CategoryName = category?.Name ?? "Unknown"
+            CategoryName = category?.Name ?? "Unknown",
+            CategoryId = recipe.CategoryId
         };
 
         return View(model);
-       
     }
 
+
+
+
+
     // POST: /User/EditRecipe
-    // Save the updated recipe details
     [HttpPost]
     public async Task<IActionResult> EditRecipe(RecipeInputVM model)
     {
-      
-        // Check if form is valid
+        var client = CreateHttpClient();
+
+        // Reload categories if form validation fails
         if (!ModelState.IsValid)
         {
-            //fetch categories if validation fails to repopulate dropdown
-            var categoriesResponse = await _httpClient.GetAsync("https://localhost:7218/api/category");
+            var categoriesResponse = await client.GetAsync("https://localhost:7218/api/category");
             var categories = new List<Category>();
             if (categoriesResponse.IsSuccessStatusCode)
             {
@@ -195,31 +270,29 @@ public class UserController : Controller
             ViewBag.Categories = categories
                 .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
                 .ToList();
-            return View(model); // If invalid show the form again
+
+            return View(model);
         }
 
-        var request = new HttpRequestMessage(HttpMethod.Put, $"https://localhost:7218/api/recipes/{model.Id}");
-        request.Content = JsonContent.Create(model);
-
-        if (Request.Headers.ContainsKey("Cookie"))
+        var request = new HttpRequestMessage(HttpMethod.Put, $"https://localhost:7218/api/recipes/{model.Id}")
         {
-            request.Headers.Add("Cookie", Request.Headers["Cookie"].ToString());
-        }
+            Content = JsonContent.Create(model)
+        };
 
-        var response = await _httpClient.SendAsync(request);
+        var response = await client.SendAsync(request);
 
         if (response.IsSuccessStatusCode)
         {
-            TempData["SuccessMessage"] = "Recipe updated successfully!"; 
-            return RedirectToAction("MyRecipes"); // After update return to user recipe list
+            TempData["SuccessMessage"] = "Recipe updated successfully!";
+            return RedirectToAction("MyRecipes");
         }
         else
         {
             var error = await response.Content.ReadAsStringAsync();
             ModelState.AddModelError("", $"❌ Failed to update recipe: {error}");
 
-            // Re-fetch categories if API update fails to repopulate dropdown
-            var categoriesResponse = await _httpClient.GetAsync("https://localhost:7218/api/category");
+            // Reload the categories if update fails
+            var categoriesResponse = await client.GetAsync("https://localhost:7218/api/category");
             var categories = new List<Category>();
             if (categoriesResponse.IsSuccessStatusCode)
             {
@@ -228,11 +301,10 @@ public class UserController : Controller
             ViewBag.Categories = categories
                 .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
                 .ToList();
+
             return View(model);
         }
-        // *** END OF MODIFICATION FOR EditRecipe POST ***
     }
-
 
 
 
@@ -241,14 +313,9 @@ public class UserController : Controller
     [HttpPost]
     public async Task<IActionResult> DeleteRecipe(int id)
     {
-      
-        var request = new HttpRequestMessage(HttpMethod.Delete, $"https://localhost:7218/api/recipes/{id}");
-        if (Request.Headers.ContainsKey("Cookie"))
-        {
-            request.Headers.Add("Cookie", Request.Headers["Cookie"].ToString());
-        }
+        var client = CreateHttpClient();
 
-        var response = await _httpClient.SendAsync(request);
+        var response = await client.DeleteAsync($"https://localhost:7218/api/recipes/{id}");
 
         if (response.IsSuccessStatusCode)
         {
@@ -261,6 +328,5 @@ public class UserController : Controller
         }
 
         return RedirectToAction("MyRecipes");
-       
     }
 }

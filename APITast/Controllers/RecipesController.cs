@@ -194,6 +194,34 @@ namespace API.Controllers
         }
 
 
+        // أضف هذا في RecipesController.cs (API)
+
+        // GET: api/recipes/user/{userId}
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetRecipesByUserId(string userId)
+        {
+            Console.WriteLine($"API: Looking for recipes for userId: {userId}");
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("User ID is required.");
+            }
+
+            var recipes = await _recipeService.GetRecipesByUserIdAsync(userId);
+
+            Console.WriteLine($"API: Found {recipes?.Count() ?? 0} recipes for user {userId}");
+
+            if (recipes == null || !recipes.Any())
+            {
+                return NotFound("No recipes found for this user.");
+            }
+
+            return Ok(recipes);
+        }
+
+
+
+
 
 
     }

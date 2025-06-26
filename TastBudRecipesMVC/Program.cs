@@ -39,8 +39,22 @@ namespace TastBudRecipesMVC
                 });
 
 
+            // i used it to get  cookies to get spesifc user 
 
-           
+            builder.Services.AddHttpContextAccessor(); 
+
+            builder.Services.AddHttpClient("AuthenticatedClient")
+                .ConfigurePrimaryHttpMessageHandler(() =>
+                {
+                    return new HttpClientHandler
+                    {
+                        UseCookies = false 
+                    };
+                });
+
+
+
+
 
 
 
